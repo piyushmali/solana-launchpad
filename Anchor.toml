@@ -3,16 +3,17 @@
 [features]
 resolution = true
 skip-lint = false
+seeds = false
 
 [programs.localnet]
-solana_launchpad = "3fJQYQfJ1STypBrF1PVsDCdtbWZztqrRHBuVJQmnHd6z"
+solana_launchpad = "DE2z65pCcNYqEqhKTV62pEu7Kp1qbV4znax2VrAL6Y5p"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
-test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test = "yarn run ts-mocha -p ./tsconfig.json -t 10000 tests/**/*.ts"

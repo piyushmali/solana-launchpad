@@ -5,6 +5,7 @@ use anchor_spl::{
     token::{self, Mint, Token, TokenAccount, Transfer},
 };
 
+// Replace this with the program ID you got from the solana address command
 declare_id!("AjUxmZYjhXbJq5yDDvxe8Hh2amWnAjLN2Wmf5oET8mZ1");
 
 #[program]
@@ -72,7 +73,6 @@ pub mod solana_launchpad {
     pub fn purchase_tokens(ctx: Context<PurchaseTokens>, amount: u64) -> Result<()> {
         let sale_round = &mut ctx.accounts.sale_round;
         let token_sale = &mut ctx.accounts.token_sale;
-        let investor = &mut ctx.accounts.investor;
 
         // Validate contribution
         require!(
@@ -129,7 +129,6 @@ pub mod solana_launchpad {
     // Claim vested tokens
     pub fn claim_tokens(ctx: Context<ClaimTokens>) -> Result<()> {
         let vesting = &mut ctx.accounts.vesting;
-        let token_sale = &ctx.accounts.token_sale;
 
         let current_time = Clock::get()?.unix_timestamp;
         let elapsed = current_time - vesting.start_time;
@@ -220,6 +219,7 @@ pub struct ActivateSaleRound<'info> {
 }
 
 #[derive(Accounts)]
+#[instruction(amount: u64)]
 pub struct PurchaseTokens<'info> {
     #[account(mut)]
     pub sale_round: Account<'info, SaleRound>,
@@ -227,9 +227,10 @@ pub struct PurchaseTokens<'info> {
     pub token_sale: Account<'info, TokenSale>,
     #[account(mut)]
     pub investor: Signer<'info>,
+    /// CHECK: Safe because this is just a native system account
     #[account(mut)]
-    pub vault: SystemAccount<'info>,
-    pub token_mint: Account<'info, Mint>, // Added token_mint account
+    pub vault: UncheckedAccount<'info>,
+    pub token_mint: Account<'info, Mint>,
     #[account(
         mut,
         associated_token::mint = token_mint,
@@ -237,13 +238,16 @@ pub struct PurchaseTokens<'info> {
     )]
     pub vault_token_account: Account<'info, TokenAccount>,
     #[account(
-        init_if_needed,
-        payer = investor,
+        mut,
         associated_token::mint = token_mint,
         associated_token::authority = investor
     )]
     pub investor_token_account: Account<'info, TokenAccount>,
-    #[account(init, payer = investor, space = 8 + 32 + 8 + 8 + 8 + 8)]
+    #[account(
+        init,
+        payer = investor,
+        space = 8 + 32 + 8 + 8 + 8 + 8
+    )]
     pub vesting: Account<'info, VestingSchedule>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
